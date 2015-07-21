@@ -19,35 +19,79 @@
 #[4,3]
 
 class Knight
-  attr_accessor :location
+  attr_accessor :x, :y
 
-  def initialize(location)
-    @location = location
+  def initialize(x, y)
+    @x = x
+    @y = y
   end
 
   def knight_moves(from_location, to_location)
+    @x = from_location[0]
+    @y = from_location[1]
+
+    possible_moves = []
+
+    possible_moves << [@x + 2, @y + 1] << [@x + 2, @y - 1] << 
+                      [@x - 2, @y + 1] << [@x - 2, @y - 1] <<
+                      [@x + 1, @y + 2] << [@x - 1, @y + 2] <<
+                      [@x + 1, @y - 2] << [@x - 1, @y - 2]
+    
+    possible_moves.map { |x| x if is_valid_move?(x) }.compact
+  end
+
+  def is_valid_move?(location)
+    location[0] >= 0 && location[1] >= 0 && location[0] < 8 && location[1] < 8
   end
 
 end
 
-class Chess
-  attr_accessor :board
+class Square
+  attr_reader :x, :y, :parent, :children
 
-  def initialize
-    @board = create_board
+  def initialize(x, y, parent = nil)
+    @x = x
+    @y = y
+    @parent = parent
+    @children = []
   end
 
-  def create_board
-    @board = []
-    (0..8).each do |x|
-      (0..8).each do |y|
-        board.push([x, y])
-      end
+  def create_children
+    children = []
+    children << [@x + 2, @y + 1] << [@x + 2, @y - 1] << 
+                [@x - 2, @y + 1] << [@x - 2, @y - 1] <<
+                [@x + 1, @y + 2] << [@x - 1, @y + 2] <<
+                [@x + 1, @y - 2] << [@x - 1, @y - 2]
+    children = children.select{ |child| is_valid_move?(child) }
+    children = children.map{ |child| Square.new(child[0], child[1], self) }
+    @children = children
+  end
+
+  def knight_moves(from_location, to_location)
+    queue = []
+    queue << Square.new(from_location[0], from_location[1])
+    loop do
+      current = queue.shift
+      return current.info if from_location[0] == to_location[0] && from_location[1] == to_location[1]
+      current.create_children.each { |child| queue << child }
     end
-    board
+  end
+
+  def info
+    "Square Info: X = #{@x}; Y = #{@y}"
+  end
+
+  private
+
+  def is_valid_move?(location)
+    location[0] >= 0 && location[1] >= 0 && location[0] < 8 && location[1] < 8
   end
 
 end
 
-game = Chess.new
-print game.board
+s = Square.new(0, 0)
+s.knight_moves([0, 0],[2, 1])
+
+#s.create_children.each do |child|
+#  puts child.info
+#end
